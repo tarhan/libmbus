@@ -253,7 +253,21 @@ mbus_serial_send_frame(mbus_handle *handle, mbus_frame *frame)
     printf("\n");
 #endif
 
-    if ((ret = write(handle->fd, buff, len)) == len)
+    int write_counter = 0;
+    unsigned char result = 1;
+
+    for (int i = 0; i < len; i++) {
+      if ((ret = write(handle->fd, (buff + i), 1)) == 1) {
+        tcdrain(handle->fd);
+        usleep(5000);
+      } else {
+        fprint(stderr, "Cannot send %d th byte\n", i + 1);
+        result = 0;
+        break;
+      }
+    }
+
+    if (result)
     {
         //
         // call the send event function, if the callback function is registered
@@ -374,4 +388,3 @@ mbus_serial_recv_frame(mbus_handle *handle, mbus_frame *frame)
 
     return MBUS_RECV_RESULT_OK;
 }
-
